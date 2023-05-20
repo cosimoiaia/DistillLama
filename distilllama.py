@@ -5,6 +5,7 @@ https://python.langchain.com/en/latest/modules/agents/agent_executors/examples/a
 """
 import os
 import glob
+import shutil
 from typing import List, Any, Dict
 from dotenv import load_dotenv
 from prompt_toolkit import prompt
@@ -102,6 +103,10 @@ def load_single_document(file_path: str) -> Document:
 def load_documents(source_dir: str) -> List[Document]:
     # Loads all documents from the source directory
     all_files = []
+
+    processed_directory = os.path.join(source_dir, 'processed')
+    os.makedirs(processed_directory, exist_ok=True)
+
     for ext in LOADER_MAPPING:
         all_files.extend(
             glob.glob(os.path.join(source_dir, f"**/*{ext}"), recursive=True)
@@ -115,6 +120,9 @@ def load_documents(source_dir: str) -> List[Document]:
     for file_path in all_files:
         results.append(load_single_document(file_path))
         progress_bar.update(1)
+        source_file_path = file_path
+        destination_file_path = os.path.join(processed_directory, os.path.basename(file_path))
+        shutil.move(source_file_path, destination_file_path)
 
     progress_bar.close()
 
@@ -136,6 +144,7 @@ def ingest(source_dir: str = source_directory):
     db = Chroma.from_documents(texts, embed, persist_directory=persist_directory,
                                client_settings=CHROMA_SETTINGS)
     db.persist()
+
     db = None
 
 
