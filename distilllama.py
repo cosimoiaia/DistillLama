@@ -2,6 +2,8 @@
 Mainly based on:
 https://python.langchain.com/en/latest/modules/agents/agent_executors/examples/agent_vectorstore.html
 
+
+!!! WORK IN PROGRESS !!!
 """
 import os
 import glob
@@ -186,5 +188,6 @@ def query():
 
 
 if __name__ == "__main__":
+    # Sample run.
     ingest()
     query()
