@@ -1,4 +1,5 @@
 # DistillLama
+![meme](assets/drinking_lama.jpeg)
 Distill knowledge with local LLMs
 
 
