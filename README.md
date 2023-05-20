@@ -39,5 +39,6 @@ python3 distilllama.py
 ```
 
 On the first run, distilllama will load all the text documents found in the documents folder.
+All ingested documents are moved into the processed subfolder.
 
-New information can also be provided from the chat interface by typing 'Information'
+New information can also be provided from the chat interface by typing 'Information'.
