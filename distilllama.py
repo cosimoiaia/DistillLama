@@ -38,6 +38,15 @@ LOADER_MAPPING = {".txt": (TextLoader, {"encoding": "utf8"})}
 
 load_dotenv()
 
+try:
+    from llama_cpp import Llama
+except ImportError as exc:
+    raise ValueError("Could not import llama_cpp python package. Please install it with `pip install llama_cpp`." ) from exc
+
+
+model = Llama(model_path=model_path, embedding=True, verbose=False)
+
+
 
 class LLamaEmbeddings(Embeddings, BaseModel):
     model: Any
@@ -54,7 +63,7 @@ class LLamaEmbeddings(Embeddings, BaseModel):
                 "Please install it with `pip install llama_cpp`."
             ) from exc
 
-        self.model = Llama(model_path=self.model_path, embedding=True)
+        self.model = model #Llama(model_path=self.model_path, embedding=True, verbose=False)
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         # print(f"Embedding documents: {texts}")
@@ -99,7 +108,7 @@ def load_documents(source_dir: str) -> List[Document]:
     return results
 
 
-chunk_size = 500
+chunk_size = 2048
 chunk_overlap = 50
 
 
@@ -118,14 +127,13 @@ def ingest(source_dir: str = source_directory):
 
 
 def query():
-    embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
     db = Chroma(persist_directory=persist_directory, embedding_function=LLamaEmbeddings(model_path=model_path),
                 client_settings=CHROMA_SETTINGS)
 
     retriever = db.as_retriever()
 
     callbacks = [StreamingStdOutCallbackHandler()]
-    llm = LlamaCpp(model_path=model_path, n_ctx=model_n_ctx, callbacks=callbacks, verbose=False)
+    llm = LlamaCpp(model_path=model_path, n_ctx=model_n_ctx, callbacks=callbacks, verbose=False, n_gpu_layers=15)
     runner = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True)
 
     while True:
