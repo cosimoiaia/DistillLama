@@ -23,6 +23,7 @@ from langchain.llms import LlamaCpp
 from pydantic import BaseModel
 from langchain.embeddings.base import Embeddings
 
+import uuid
 import os
 
 model_type = os.environ.get('MODEL_TYPE')
@@ -32,6 +33,7 @@ model_n_ctx = os.environ.get('MODEL_N_CTX')
 persist_directory = os.environ.get('PERSIST_DIRECTORY')
 source_directory = os.environ.get('SOURCE_DIRECTORY', 'documents')
 embeddings_model_name = os.environ.get('EMBEDDINGS_MODEL_NAME')
+HF_EMB = os.environ.get('HF_EMB')
 
 # Map file extensions to document loaders and their arguments
 LOADER_MAPPING = {".txt": (TextLoader, {"encoding": "utf8"})}
@@ -41,11 +43,17 @@ load_dotenv()
 try:
     from llama_cpp import Llama
 except ImportError as exc:
-    raise ValueError("Could not import llama_cpp python package. Please install it with `pip install llama_cpp`." ) from exc
+    raise ValueError(
+        "Could not import llama_cpp python package. Please install it with `pip install llama_cpp`.") from exc
 
+if HF_EMB:
+    # HuggingFace embeddings have a lower acc but much higher speed
+    from langchain.embeddings import HuggingFaceEmbeddings
 
-model = Llama(model_path=model_path, embedding=True, verbose=False)
-
+    embed = HuggingFaceEmbeddings(model_name=embeddings_model_name)
+    model = None
+else:
+    model = Llama(model_path=model_path, embedding=True, verbose=False)
 
 
 class LLamaEmbeddings(Embeddings, BaseModel):
@@ -63,7 +71,7 @@ class LLamaEmbeddings(Embeddings, BaseModel):
                 "Please install it with `pip install llama_cpp`."
             ) from exc
 
-        self.model = model #Llama(model_path=self.model_path, embedding=True, verbose=False)
+        self.model = model  # Llama(model_path=self.model_path, embedding=True, verbose=False)
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         # print(f"Embedding documents: {texts}")
@@ -74,6 +82,10 @@ class LLamaEmbeddings(Embeddings, BaseModel):
         # print("Embedding query")
         embeddings = self.model.create_embedding(text)['data'][0]['embedding']
         return embeddings
+
+
+def load_from_text(text: str) -> Document:
+    return Document(page_content=text, metadata={})
 
 
 def load_single_document(file_path: str) -> Document:
@@ -108,7 +120,7 @@ def load_documents(source_dir: str) -> List[Document]:
     return results
 
 
-chunk_size = 2048
+chunk_size = 512
 chunk_overlap = 50
 
 
@@ -120,14 +132,14 @@ def ingest(source_dir: str = source_directory):
     print(f"Loaded {len(documents)} documents from {source_directory}")
     print(f"Split into {len(texts)} chunks of text (max. {chunk_size} characters each)")
 
-    db = Chroma.from_documents(texts, LLamaEmbeddings(model_path=model_path), persist_directory=persist_directory,
+    db = Chroma.from_documents(texts, embed, persist_directory=persist_directory,
                                client_settings=CHROMA_SETTINGS)
     db.persist()
     db = None
 
 
 def query():
-    db = Chroma(persist_directory=persist_directory, embedding_function=LLamaEmbeddings(model_path=model_path),
+    db = Chroma(persist_directory=persist_directory, embedding_function=embed,
                 client_settings=CHROMA_SETTINGS)
 
     retriever = db.as_retriever()
@@ -137,10 +149,14 @@ def query():
     runner = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True)
 
     while True:
-        q = input("\nEnter your question or type 'quit' to exit > ")
+        q = input("\nEnter your question or type 'quit' to exit\n> ")
         if q == "quit":
             break
-
+        if q == "information:":
+            text = input("\nEnter the information you want to distill in the A.I. \n>")
+            load_from_text(text=text)
+            db.add_texts(texts=text, ids=str(uuid.uuid1()))
+            continue
         # Get the answer from the chain
         res = runner(q)
         answer, docs = res['result'], res['source_documents']
