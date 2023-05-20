@@ -7,6 +7,7 @@ import os
 import glob
 from typing import List, Any, Dict
 from dotenv import load_dotenv
+from prompt_toolkit import prompt
 
 from langchain.document_loaders import TextLoader
 
@@ -149,15 +150,16 @@ def query():
     runner = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True)
 
     while True:
-        q = input("\nEnter your question or type 'quit' to exit\n> ")
+        q = prompt("\nEnter your question, type 'Information' to provide additional "
+                   "information to the model or type 'quit' to exit\n> ")
         if q == "quit":
             break
-        if q == "information:":
-            text = input("\nEnter the information you want to distill in the A.I. \n>")
+        if q == "Information":
+            text = prompt("\nEnter the information you want to distill into your A.I. \n> ")
             load_from_text(text=text)
             db.add_texts(texts=text, ids=str(uuid.uuid1()))
             continue
-        # Get the answer from the chain
+
         res = runner(q)
         answer, docs = res['result'], res['source_documents']
 
