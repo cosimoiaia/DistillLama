@@ -24,7 +24,20 @@ cp sample.env .env
 
 Edit the .env file setting the variables according to your path.
 
+```shell
+PERSIST_DIRECTORY=./db
+MODEL_TYPE=LlamaCpp
+MODEL_PATH=YOUR_MODEL_FILE.bin
+EMBEDDINGS_MODEL_NAME=all-MiniLM-L6-v2
+HF_EMB=True
+MODEL_N_CTX=2048
+```
+
 Run it:
 ```shell
 python3 distilllama.py
 ```
+
+On the first run, distilllama will load all the text documents found in the documents folder.
+
+New information can also be provided from the chat interface by typing 'Information'

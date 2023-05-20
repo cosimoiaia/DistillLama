@@ -156,8 +156,9 @@ def query():
             break
         if q == "Information":
             text = prompt("\nEnter the information you want to distill into your A.I. \n> ")
-            load_from_text(text=text)
-            db.add_texts(texts=text, ids=str(uuid.uuid1()))
+            print("Ingesting new informations...", end='')
+            db.add_texts(texts=[text], ids=str(uuid.uuid1()))
+            print("Done")
             continue
 
         res = runner(q)
