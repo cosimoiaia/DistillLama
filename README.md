@@ -33,6 +33,13 @@ HF_EMB=True
 MODEL_N_CTX=2048
 ```
 
+There are several models suited for this, one that has good performance/resources ratio so far is:
+
+https://huggingface.co/TheBloke/wizard-mega-13B-GGML
+
+Any other model with the ggml format from the latest release of llama.cpp will work as well, each model card has the requirements for RAM and disk size, so you can choose one accordingly to your local resources.
+
+
 Run it:
 ```shell
 python3 distilllama.py
