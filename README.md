@@ -35,9 +35,10 @@ MODEL_N_CTX=2048
 
 There are several models suited for this, one that has good performance/resources ratio so far is:
 
-https://huggingface.co/TheBloke/wizard-mega-13B-GGML
+https://huggingface.co/TheBloke/Wizard-Vicuna-13B-Uncensored-GGML
 
-Any other model with the ggml format from the latest release of llama.cpp will work as well, each model card has the requirements for RAM and disk size, so you can choose one accordingly to your local resources.
+Any other model with the ggml format from the PREVIOUS release of llama.cpp will work as well, each model card has the requirements for RAM and disk size, so you can choose one accordingly to your local resources.
+The new model format can be adopted by recompiling the llama-cpp-python package from source with the latest commit.
 
 
 Run it:
